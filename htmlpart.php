@@ -26,30 +26,26 @@ class htmlpart {
         }
     }
 
-    public static function css($arg1 = NULL)
+    public static function css($arg1 = NULL, $arg2 = NULL)
     {
         $class = self::load('meta');
         if (!$class->isCharacter($arg1)) {
             return false;
         } elseif(!$url = $class->normalize($arg1)) {
             return false;
-        } elseif('.css' !== substr(strtolower($url), -4)) {
-            return false;
         }
-        return self::meta('stylesheet', $url);
+        return self::meta('stylesheet', $url, $arg2);
     }
 
-    public static function js($arg1 = NULL)
+    public static function js($arg1 = NULL, $arg2 = NULL)
     {
         $class = self::load('meta');
         if (!$class->isCharacter($arg1)) {
             return false;
         } elseif(!$url = $class->normalize($arg1)) {
             return false;
-        } elseif('.js' !== substr(strtolower($url), -3)) {
-            return false;
         }
-        return self::meta('javascript', $url);
+        return self::meta('javascript', $url, $arg2);
     }
 
 
@@ -79,6 +75,9 @@ class htmlpart {
         if ('namespace' === $method) {
             $class = self::load('meta');
             return $class->display_namespace($return);
+        } elseif ('js' === $method || 'javascript' === $method) {
+            $class = self::load('meta');
+            return $class->display_javascript($return);
         } else {
             if(!$class = self::load($method)) {
                 return NULL;
@@ -232,12 +231,12 @@ class htmlpart_meta extends htmlpart {
 
         if (preg_match('/\A(og|fb|twitter):(.*)\z/', $name, $match)) {
             $this->addOgp($match[2], $value, $match[1]);
-        } elseif (preg_match('/\A(canonical|alternate|stylesheet|prev|next)\z/', $name)) {
+        } elseif (preg_match('/\A(canonical|alternate|prev|next)\z/', $name)) {
             $this->addLink($name, $value, $sub);
+        } elseif (preg_match('/\A(stylesheet|css)\z/', $name)) {
+            $this->addCss($value, $sub);
         } elseif (preg_match('/\A(javascript|js)\z/', $name) && $this->isCharacter($value)) {
-            $this->set('script', 'js:'.$value, FALSE, array(
-                'src' => $value,
-            ));
+            $this->addScript($value, $sub);
         } else {
             $this->addMeta($name, $value, $sub);
         }
@@ -258,8 +257,9 @@ class htmlpart_meta extends htmlpart {
         $lines = $sort = array();
 
         $data = self::data();
+        $count = 1;
         foreach($data as $tag => $array) {
-            if ('namespace' === $tag || empty($array)) {
+            if ('namespace' === $tag || 'script' === $tag || empty($array)) {
                 continue;
             }
 
@@ -275,14 +275,15 @@ class htmlpart_meta extends htmlpart {
                 $lines[$tag] = (empty($lines[$tag]) ? array() : $lines[$tag]);
                 $sort[$tag] = (empty($sort[$tag]) ? array() : $sort[$tag]);
                 $lines[$tag][] = $str.'>';
-                $sort[$tag][] = $props['_'];
+                $sort[$tag][] = (empty($props['_']) ? $tag.$count : $props['_']);
+                ++$count;
             }
         }
 
         $html = NULL;
         foreach($lines as $tag => $array) {
             array_multisort($sort[$tag], SORT_STRING, $array);
-            $html .= PHP_EOL.implode(PHP_EOL, $array);
+            $html .= implode(PHP_EOL, $array).PHP_EOL;
         }
 
         if ($return) {
@@ -308,6 +309,39 @@ class htmlpart_meta extends htmlpart {
         }
     }
 
+    function display_javascript($return = FALSE)
+    {
+        $data = self::data();
+        if (!empty($data['script'])) {
+            $lines = $sort = array();
+            $str = NULL;
+            $count = 1;
+            foreach($data['script'] as $props) {
+                $str ='<script';
+                foreach($props as $key => $val) {
+                    if ('_' === $key) {
+                        continue;
+                    }
+
+                    $str .= ' '.$key.'="'.$val.'"';
+                }
+                $lines[] = $str.'></script>';
+                $sort[] = (empty($props['_']) ? $count : $props['_']);
+                ++$count;
+            }
+
+            array_multisort($sort, SORT_STRING, $lines);
+
+            $html = implode(PHP_EOL, $lines).PHP_EOL;
+
+            if ($return) {
+                return $html;
+            } else {
+                echo $html;
+            }
+        }
+    }
+
     private function set($tag, $key, $multi = FALSE, $data)
     {
         if ('meta' === $tag) {
@@ -318,14 +352,16 @@ class htmlpart_meta extends htmlpart {
                 $this->tag_meta[$key] = $data;
             }
         } elseif ('link' === $tag) {
-            $data['_'] = $key;
+            if (empty($data['rel']) || 'stylesheet' !== $data['rel']) {
+                $data['_'] = $key;
+            }
+
             if ($multi) {
                 $this->tag_link[] = $data;
             } else {
                 $this->tag_link[$key] = $data;
             }
         } elseif ('script' === $tag) {
-            $data['_'] = $key;
             if ($multi) {
                 $this->tag_script[] = $data;
             } else {
@@ -459,12 +495,28 @@ class htmlpart_meta extends htmlpart {
                 $this->set('link', $name, TRUE, $data);
             }
         } elseif($this->isCharacter($value)) {
-            $_name = ('stylesheet' === $name ? $name.':'.$value : $name);
-            $this->set('link', $_name, FALSE, array(
+            $this->set('link', $name, FALSE, array(
                 'rel' => $name,
                 'href' => $this->normalize($value)
             ));
         }
+    }
+
+    private function addCss($url, $sort = NULL)
+    {
+        $this->set('link', 'css:'.$url, FALSE, array(
+            '_' => $sort,
+            'rel' => 'stylesheet',
+            'href' => $url,
+        ));
+    }
+
+    private function addScript($url, $sort = NULL)
+    {
+        $this->set('script', 'js:'.$url, FALSE, array(
+            '_' => $sort,
+            'src' => $url,
+        ));
     }
 }
 
