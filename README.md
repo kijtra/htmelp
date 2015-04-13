@@ -29,7 +29,8 @@ htmlpart::css('/css/app.css');
 htmlpart::js('http://example.com/js/app.js');
 ?>
 <html>
-<head>
+<!-- OpenGraph Namespace support -->
+<head <?php echo htmlpart::out('namespace'); ?>>
 <?php
 // Output MetaTags
 echo htmlpart::out('meta');

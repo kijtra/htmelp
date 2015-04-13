@@ -75,12 +75,18 @@ class htmlpart {
     public static function out($method = NULL, $return = TRUE)
     {
         $method = ('bread' === $method ? 'breadcrumb' : $method);
-        if(!$class = self::load($method)) {
-            return NULL;
-        }
 
-        if (method_exists($class, 'display')) {
-            return $class->display($return);
+        if ('namespace' === $method) {
+            $class = self::load('meta');
+            return $class->display_namespace($return);
+        } else {
+            if(!$class = self::load($method)) {
+                return NULL;
+            }
+
+            if (method_exists($class, 'display')) {
+                return $class->display($return);
+            }
         }
     }
 
@@ -283,6 +289,22 @@ class htmlpart_meta extends htmlpart {
             return $html;
         } else {
             echo $html;
+        }
+    }
+
+    function display_namespace($return = FALSE)
+    {
+        if (!empty($this->namespace)) {
+            $str = NULL;
+            foreach($this->namespace as $key => $val) {
+                $str .= $key.': '.$val.' ';
+            }
+            $str = ' prefix="'.trim($str).'"';
+            if ($return) {
+                return $str;
+            } else {
+                echo $str;
+            }
         }
     }
 
