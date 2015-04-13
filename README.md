@@ -79,9 +79,9 @@ echo htmlpart::out('bread');
 
 /* Results
 <ol class="breadcrumb" xmlns:v="http://rdf.data-vocabulary.org/#">
-<li class="first" typeof="v:Breadcrumb"><a href="http://localhost:8080/" rel="v:url">Home</a></li>
-<li typeof="v:Breadcrumb"><a href="http://localhost:8080/second/" rel="v:url">Second</a></li>
-<li class="active last" typeof="v:Breadcrumb"><a href="http://localhost:8080/second/third/" rel="v:url">Third</a></li>
+<li class="first" typeof="v:Breadcrumb"><a href="http://example.com/" rel="v:url">Home</a></li>
+<li typeof="v:Breadcrumb"><a href="http://example.com/second/" rel="v:url">Second</a></li>
+<li class="active last" typeof="v:Breadcrumb"><a href="http://example.com/second/third/" rel="v:url">Third</a></li>
 </ol>
 */
 ?>
