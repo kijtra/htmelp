@@ -887,6 +887,7 @@ class htmlpart_breadcrumb extends htmlpart {
             $class = ($first ? 'first' : NULL);
             $class .= ($url === $last ? ' active last' : NULL);
             $html .= '<li'.($class ? ' class="'.trim($class).'"' : NULL).' typeof="v:Breadcrumb"><a href="'.$url.'" rel="v:url">'.$name.'</a></li>';
+            $first = false;
         }
 
         $html .= '</ol>';

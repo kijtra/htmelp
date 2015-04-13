@@ -1,5 +1,5 @@
 <?php
-include(__DIR__.'/main.php');
+include(__DIR__.'/htmlpart.php');
 
 // example
 $_SERVER['REQUEST_URI'] = '/path/to/dir?param1=value1';
